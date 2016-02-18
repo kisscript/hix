@@ -81,17 +81,72 @@ var game =
 		if (design)
 		{
 			canvas.refresh = true;
+
+			design.id = (design.id) ? design.id : Object.keys (game.canvas.render).length;
+
 			design.type = 'box';
 			design.type = (design.image) ? 'image' : design.type;
 			design.type = (design.a) ? 'line' : design.type;
 			design.type = (design.r) ? 'ring' : design.type;
 			design.type = (design.text) ? 'text' : design.type;
+
+			game.canvas.render[design.id] = design;
 		}
 		else
 		{
-			if (canvas.refresh)
+			if (game.canvas.refresh)
 			{
+				var context = game.canvas.context;
+				game.canvas.refresh = false;
+
 				game.canvas.clear ();
+
+				for (var id in game.canvas.render)
+				{
+					var render = game.canvas.render[id];
+
+					var a = render.a;
+					var b = render.b;
+
+					var h = render.hight;
+					var r = render.r;
+					var w = render.width;
+
+					var x = render.x;
+					var y = render.y;
+
+					context.beginPath ();
+					context.lineWidth = (render.line) ? render.line : 1;
+					var _ = (render.fill) ? context.fillStyle = render.color : context.strokeStyle = render.color;
+					var _ = (render.dash) ? context.setLineDash (render.dash) : undefined;
+					var _ = (render.offset) ? context.lineDashOffset = render.offset : undefined;
+
+					switch (render.type)
+					{
+						case 'box':
+							var _ = (render.fill) ? context.fillRect (x, y, w, h) : context.strokeRect (x, y, w, h);
+						break;
+
+						case 'image':
+							var _ = (h) ? context.drawImage (render.image, x, y, w, h) : context.drawImage (render.image, x, y);
+						break;
+
+						case 'line':
+							context.moveTo (a, b);
+							context.lineTo (x, y);
+							context.stroke ();
+						break;
+
+						case 'line':
+							gcontext.arc (x, y, r, a, b);
+							var _ = (render.fill) ? context.fill () : context.stroke ();
+						break;
+
+						case 'text':
+							var _ = (render.fill) ? context.fillText (render.text, x, y) : context.strokeText (render.text, x, y);
+						break;
+					};
+				};
 			};
 		};
 	},
