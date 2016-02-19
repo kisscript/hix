@@ -31,6 +31,7 @@ var game =
 			var canvas = window.document.createElement ('canvas');
 			canvas.context = canvas.getContext ('2d');
 			canvas.refresh = true;
+			canvas.render = {};
 
 			canvas.append = function ()
 			{
@@ -39,13 +40,82 @@ var game =
 
 			canvas.autosize = function ()
 			{
+				canvas.refresh = true;
 				canvas.height = window.innerHeight;
 				canvas.width = window.innerWidth;
+			};
+
+			canvas.convert = function (value)
+			{
+				value.type = (value.h) ? 'horisontal' : value.type;
+				value.type = (value.w) ? 'vertical' : value.type;
+				value.type = (value.x) ? 'x' : value.type;
+				value.type = (value.y) ? 'y' : value.type;
+				switch (value.type)
+				{
+					case 'horisontal':
+						var v = value.h;
+						var k = value.k;
+						v = ((v > 0) && (v <= 1)) ? game.canvas.height * v : v;
+						value = v * k;
+					break;
+
+					case 'vertical':
+						var v = value.w;
+						var k = value.k;
+						v = ((v > 0) && (v <= 1)) ? game.canvas.width * v : v;
+						value = v * k;
+					break;
+
+					case 'x':
+						var x = value.x;
+							x = ((x > 0) && (x <= 1)) ? game.canvas.width * x : x;
+						var w = game.canvas.convert(value.w);
+							w = ((w > 0) && (w <= 1)) ? game.canvas.width * w : w;
+						var k = value.k;
+						value = x - w * k;
+					break;
+
+					case 'y':
+						var y = value.y;
+							y = ((y > 0) && (y <= 1)) ? game.canvas.height * y : y;
+						var h = game.canvas.convert(value.h);
+							h = ((h > 0) && (h <= 1)) ? game.canvas.height * h : h;
+						var k = value.k;
+						value = y - h * k;
+					break;
+				};
+				return value;
+			};
+
+			canvas.horisontal = function (value)
+			{
+				if (typeof(value) == 'object')
+				{
+					value = canvas.convert (value);
+				}
+				else
+				{
+					value = ((value > 0) && (value <= 1)) ? game.canvas.width * value : value;
+				};
+				return value;
 			};
 
 			canvas.clear = function ()
 			{
 				game.canvas.context.clearRect (0, 0, canvas.width, canvas.height);
+			};
+
+			canvas.minimal = function (value)
+			{
+				value = ((value > 0) && (value <= 1)) ? Math.min (game.canvas.height, game.canvas.width) * value : value;
+				return value;
+			};
+
+			canvas.maximal = function (value)
+			{
+				value = ((value > 0) && (value <= 1)) ? Math.max (game.canvas.height, game.canvas.width) * value : value;
+				return value;
 			};
 
 			canvas.update = function ()
@@ -61,6 +131,19 @@ var game =
 						canvas.autosize ();
 					break;
 				};
+			};
+
+			canvas.vertical = function (value)
+			{
+				if (typeof(value) == 'object')
+				{
+					value = canvas.convert (value);
+				}
+				else
+				{
+					value = ((value > 0) && (value <= 1)) ? game.canvas.height * value : value;
+				};
+				return value;
 			};
 
 		delete game['canvas'];
@@ -80,15 +163,15 @@ var game =
 	{
 		if (design)
 		{
-			canvas.refresh = true;
+			game.canvas.refresh = true;
 
 			design.id = (design.id) ? design.id : Object.keys (game.canvas.render).length;
 
 			design.type = 'box';
-			design.type = (design.image) ? 'image' : design.type;
+			design.type = (design.i) ? 'image' : design.type;
 			design.type = (design.a) ? 'line' : design.type;
 			design.type = (design.r) ? 'ring' : design.type;
-			design.type = (design.text) ? 'text' : design.type;
+			design.type = (design.t) ? 'text' : design.type;
 
 			game.canvas.render[design.id] = design;
 		}
@@ -105,15 +188,15 @@ var game =
 				{
 					var render = game.canvas.render[id];
 
-					var a = render.a;
-					var b = render.b;
+					var a = game.canvas.horisontal (render.a);
+					var b = game.canvas.vertical (render.b);
 
-					var h = render.hight;
-					var r = render.r;
-					var w = render.width;
+					var h = game.canvas.vertical (render.h);
+					var r = game.canvas.minimal (render.r);
+					var w = game.canvas.horisontal (render.w);
 
-					var x = render.x;
-					var y = render.y;
+					var x = game.canvas.horisontal (render.x);
+					var y = game.canvas.vertical (render.y);
 
 					context.beginPath ();
 					context.lineWidth = (render.line) ? render.line : 1;
@@ -128,7 +211,7 @@ var game =
 						break;
 
 						case 'image':
-							var _ = (h) ? context.drawImage (render.image, x, y, w, h) : context.drawImage (render.image, x, y);
+							var _ = (h) ? context.drawImage (render.i, x, y, w, h) : context.drawImage (render.i, x, y);
 						break;
 
 						case 'line':
@@ -203,7 +286,7 @@ var game =
 	run: function ()
 	{
 		game.update ();
-		game.draw;
+		game.draw = undefined;
 	},
 
 	scene: { main: [] },
@@ -216,6 +299,11 @@ var game =
 
 game.load ();
 
-game.create.button = {};
-game.create.button = {};
-game.create.button = {};
+game.draw =
+{
+	x: { x: 0.5, w: { h: 0.2, k: 1 }, k: 0.5 },
+	y: { y: 0.5, h: 0.2, k: 0.5 },
+	h: 0.2,
+	w: { h: 0.2, k: 1 },
+	fill: true
+};
